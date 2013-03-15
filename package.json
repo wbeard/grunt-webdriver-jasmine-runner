@@ -1,0 +1,42 @@
+{
+  "name": "grunt-webdriver-jasmine-runnner",
+  "description": "A grunt plugin that runs jasmine tests using webdriver.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/RallySoftware/grunt-webdriver-jasmine-runner",
+  "author": {
+    "name": "Ken & Robb",
+    "email": "kheutmaker@rallydev.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RallySoftware/grunt-webdriver-jasmine-runner"
+  },
+  "bugs": {
+    "url": "https://github.com/RallySoftware/grunt-webdriver-jasmine-runner/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/RallySoftware/grunt-webdriver-jasmine-runner/blob/master/LICENSE-MIT"
+    }
+  ],
+  "main": "Gruntfile.js",
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "devDependencies": {
+    "grunt-contrib-jshint": "~0.1.1",
+    "grunt-contrib-clean": "~0.4.0",
+    "grunt-contrib-nodeunit": "~0.1.2",
+    "grunt": "~0.4.1"
+  },
+  "peerDependencies": {
+    "grunt": "~0.4.1"
+  },
+  "keywords": [
+    "gruntplugin"
+  ]
+}
