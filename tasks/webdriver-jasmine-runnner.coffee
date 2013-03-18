@@ -16,14 +16,16 @@ module.exports = (grunt) ->
       testServer: 'localhost'
       testServerPort: 8000
       testFile: '_SpecRunner.html'
+      allTestsTimeout: 30 * 60 * 1000
 
     if not fs.existsSync options.seleniumJar
       throw Error "The specified jar does not exist: #{options.seleniumJar}"
 
+    # TODO Make sure that you can run against a remote selenium server rather than starting your own
     server = new remote.SeleniumServer
       jar: options.seleniumJar
       port: options.seleniumServerPort
-
+    grunt.log.writeln "Starting webdriver server at http://localhost:#{options.seleniumServerPort}"
     server.start();
 
     done = @async()
@@ -34,32 +36,50 @@ module.exports = (grunt) ->
           .withCapabilities({'browserName': options.testBrowser})
           .build()
 
+        grunt.log.writeln "Connecting to webdriver server at #{serverAddress}."
+
         testUrl = "http://#{options.testServer}:#{options.testServerPort}/#{options.testFile}"
 
+        grunt.log.writeln "Running Jasmine tests at #{testUrl} with #{options.testBrowser}."
+
+        allTestsPassed = false
+
         driver.session_.then (sessionData) ->
-            htmlReporterElement = null
-            runJasmineTests = webdriver.promise.createFlow (flow)->
-              flow.execute ->
-                driver.get("#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{sessionData.id}").then ->
 
-
-              flow.execute ->
-                elementFound = false
-
+          runJasmineTests = webdriver.promise.createFlow (flow)->
+            flow.execute ->
+              driver.get("#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{sessionData.id}").then ->
                 driver.wait ->
-                  driver.getTitle().then (title)->
-                    !!title
+                  driver.isElementPresent(webdriver.By.className('symbolSummary')).then (symbolSummaryFound)->
+                    symbolSummaryFound
                 , 5000
+                driver.findElement(webdriver.By.className('symbolSummary')).then (symbolSummaryElement) ->
+                  symbolSummaryElement.findElements(webdriver.By.tagName('li')).then (symbolSummaryIcons) ->
+                    numTests = symbolSummaryIcons.length
+                    grunt.log.writeln 'Test page loaded.  Running ' + "#{numTests}".cyan + ' tests...'
+                    driver.wait ->
+                      symbolSummaryElement.isElementPresent(webdriver.By.className('pending')).then (isPendingPresent)->
+                        !isPendingPresent
+                    , options.allTestsTimeout
+                    grunt.log.writeln 'Done running all tests.'
+                    driver.wait ->
+                      driver.isElementPresent(webdriver.By.id('details')).then (isPresent) ->
+                        isPresent
+                    , 6000
+                    driver.findElement(webdriver.By.id('details')).then (detailsElement) ->
+                      detailsElement.isElementPresent(webdriver.By.className('failed')).then (hasFailures) ->
+                        if (hasFailures)
+                          detailsElement.findElements(webdriver.By.className('failed')).then (failedElements) ->
+                            grunt.log.writeln "#{failedElements.length} of #{numTests} tests failed:".red
+                            for failedElement in failedElements
+                              failedElement.getText().then (failureText) ->
+                                  grunt.log.writeln failureText.yellow
+                        else
+                          allTestsPassed = true
+                          grunt.log.writeln 'All ' + "#{numTests}".cyan + ' tests passed!'
 
-                driver.findElement(webdriver.By.id('HTMLReporter')).then (elem) ->
-                  elementFound = true
-                  htmlReporterElement = elem
-
-              flow.execute ->
-                htmlReporterElement.getText().then (elemText) ->
-                  console.log elemText
-
-            runJasmineTests.then ->
-              driver.quit().addBoth ->
-                  server.stop()
-                  done()
+          runJasmineTests.then ->
+            grunt.log.writeln 'Closing test servers.'
+            driver.quit().addBoth ->
+              server.stop()
+              done(allTestsPassed)
