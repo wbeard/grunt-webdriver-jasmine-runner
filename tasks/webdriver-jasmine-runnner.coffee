@@ -17,6 +17,7 @@ module.exports = (grunt) ->
       testServerPort: 8000
       testFile: '_SpecRunner.html'
       allTestsTimeout: 30 * 60 * 1000
+      keepalive: false
 
     if not fs.existsSync options.seleniumJar
       throw Error "The specified jar does not exist: #{options.seleniumJar}"
@@ -79,7 +80,8 @@ module.exports = (grunt) ->
                           grunt.log.writeln 'All ' + "#{numTests}".cyan + ' tests passed!'
 
           runJasmineTests.then ->
-            grunt.log.writeln 'Closing test servers.'
-            driver.quit().addBoth ->
-              server.stop()
-              done(allTestsPassed)
+            if (!options.keepalive)
+              grunt.log.writeln 'Closing test servers.'
+              driver.quit().addBoth ->
+                server.stop()
+                done(allTestsPassed)
