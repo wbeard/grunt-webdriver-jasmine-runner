@@ -49,7 +49,7 @@ module.exports = (grunt) ->
 
           runJasmineTests = webdriver.promise.createFlow (flow)->
             flow.execute ->
-              driver.get("#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{sessionData.id}").then ->
+              driver.get("#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{sessionData.id}&useWebdriver=true").then ->
                 driver.wait ->
                   driver.isElementPresent(webdriver.By.className('symbolSummary')).then (symbolSummaryFound)->
                     symbolSummaryFound
