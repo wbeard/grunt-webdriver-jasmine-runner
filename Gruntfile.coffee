@@ -11,7 +11,7 @@ module.exports = (grunt) ->
     clean:
       tests: ['tmp']
 
-    webdriver_jasmine_runnner:
+    webdriver_jasmine_runner:
       default_options:
         options: {}
         files:
@@ -26,6 +26,6 @@ module.exports = (grunt) ->
     nodeunit:
       tests: ['test/*_test.js']
 
-  grunt.registerTask 'test', ['clean', 'webdriver_jasmine_runnner', 'nodeunit']
+  grunt.registerTask 'test', ['clean', 'webdriver_jasmine_runner', 'nodeunit']
 
   grunt.registerTask 'default', ['test']

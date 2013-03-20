@@ -1,5 +1,5 @@
 {
-  "name": "grunt-webdriver-jasmine-runnner",
+  "name": "grunt-webdriver-jasmine-runner",
   "description": "A grunt plugin that runs jasmine tests using webdriver.",
   "version": "0.1.0",
   "homepage": "https://github.com/RallySoftware/grunt-webdriver-jasmine-runner",

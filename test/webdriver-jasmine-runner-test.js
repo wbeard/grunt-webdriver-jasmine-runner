@@ -22,7 +22,7 @@ var grunt = require('grunt');
     test.ifError(value)
 */
 
-exports.webdriver_jasmine_runnner = {
+exports.webdriver_jasmine_runner = {
   setUp: function(done) {
     // setup here if necessary
     done();
