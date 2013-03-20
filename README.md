@@ -63,51 +63,51 @@ grunt.initConfig({
 
 
 #### options.seleniumJar
-Type: `String`
-Default value: `__dirname + '/lib/selenium-server-standalone-2.31.0.jar'`
+- Type: `String`
+- Default value: `__dirname + '/lib/selenium-server-standalone-2.31.0.jar'`
 
 The location of the selenium standalone server jar.
 
 #### options.seleniumServerPort
-Type: `Number`
-Default value: `4444`
+- Type: `Number`
+- Default value: `4444`
 
 The port number to use for the selenium server.
 
 #### options.testBrowser
-Type: `String`
-Default value: `'chrome'`
-AllowedValues: `'chrome', 'firefox', ...`
+- Type: `String`
+- Default value: `'chrome'`
+- AllowedValues: `'chrome', 'firefox', ...`
 
 The browser to be used to run the tests.
 
 #### options.testServer
-Type: `String`
-Default value: `'localhost'`
+- Type: `String`
+- Default value: `'localhost'`
 
 The address of the server where the application is running.
 
 #### options.testServerPort
-Type: `Number`
-Default value: `8000`
+- Type: `Number`
+- Default value: `8000`
 
 The port where the application is running.
 
 #### options.testFile
-Type: `String`
-Default value: `'_SpecRunner.html'`
+- Type: `String`
+- Default value: `'_SpecRunner.html'`
 
 The file to load that runs the jasmine tests.
 
 #### options.allTestsTimeout
-Type: `Number`
-Default value: `30 * 60 * 1000`
+- Type: `Number`
+- Default value: `30 * 60 * 1000`
 
 Time in milliseconds to wait for the tests to complete.
 
 #### options.keepalive
-Type: `Boolean`
-Default value: `false`
+- Type: `Boolean`
+- Default value: `false`
 
 When true, the selenium server and browser are not closed after the tests have been run (for debugging).
 
