@@ -5,10 +5,25 @@
 ## Getting Started
 This plugin requires Grunt `~0.4.1`
 
-If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins. Once you're familiar with that process, you may install this plugin with this command:
+If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins.
+Once you're familiar with that process, you may install this plugin with this command:
 
 ```shell
-npm install grunt-webdriver-jasmine-runnner --save-dev
+npm install git+ssh://github.com/RallySoftware/grunt-webdriver-jasmine-runner.git
+```
+
+You will probably need to enter your github credentials to complete the installation
+
+The module can also be installed with package.json by adding the following:
+
+```js
+{
+    "name": "your-app-name",
+    "version": "99.99.99",
+    "devDependencies": {
+        "private-repo": "https://github.com/RallySoftware/grunt-webdriver-jasmine-runner.git"
+    }
+}
 ```
 
 One the plugin has been installed, it may be enabled inside your Gruntfile with this line of JavaScript:
@@ -37,53 +52,83 @@ grunt.initConfig({
 
 ### Options
 
-#### options.separator
+      seleniumJar: __dirname+'/lib/selenium-server-standalone-2.31.0.jar'
+      seleniumServerPort: 4444
+      testBrowser: 'chrome'
+      testServer: 'localhost'
+      testServerPort: 8000
+      testFile: '_SpecRunner.html'
+      allTestsTimeout: 30 * 60 * 1000
+      keepalive: false
+
+
+#### options.seleniumJar
 Type: `String`
-Default value: `',  '`
+Default value: `__dirname + '/lib/selenium-server-standalone-2.31.0.jar'`
 
-A string value that is used to do something with whatever.
+The location of the selenium standalone server jar.
 
-#### options.punctuation
+#### options.seleniumServerPort
+Type: `Number`
+Default value: `4444`
+
+The port number to use for the selenium server.
+
+#### options.testBrowser
 Type: `String`
-Default value: `'.'`
+Default value: `'chrome'`
+AllowedValues: `'chrome', 'firefox', ...`
 
-A string value that is used to do something else with whatever else.
+The browser to be used to run the tests.
+
+#### options.testServer
+Type: `String`
+Default value: `'localhost'`
+
+The address of the server where the application is running.
+
+#### options.testServerPort
+Type: `Number`
+Default value: `8000`
+
+The port where the application is running.
+
+#### options.testFile
+Type: `String`
+Default value: `'_SpecRunner.html'`
+
+The file to load that runs the jasmine tests.
+
+#### options.allTestsTimeout
+Type: `Number`
+Default value: `30 * 60 * 1000`
+
+Time in milliseconds to wait for the tests to complete.
+
+#### options.keepalive
+Type: `Boolean`
+Default value: `false`
+
+When true, the selenium server and browser are not closed after the tests have been run (for debugging).
 
 ### Usage Examples
 
 #### Default Options
-In this example, the default options are used to do something with whatever. So if the `testing` file has the content `Testing` and the `123` file had the content `1 2 3`, the generated result would be `Testing, 1 2 3.`
+This task isn't very useful by itself. A usual use case if to configure webdriver_jasmine_runner in s grunt.initConfig() call and
+combine it with other tasks with grunt.registerTask()
 
-```js
-grunt.initConfig({
-  webdriver_jasmine_runnner: {
-    options: {},
-    files: {
-      'dest/default_options': ['src/testing', 'src/123'],
-    },
-  },
-})
-```
+```coffee
+grunt.initConfig
+    webdriver_jasmine_runner:
+        orca:
+            options:
+                keepalive: true
 
-#### Custom Options
-In this example, custom options are used to do something else with whatever else. So if the `testing` file has the content `Testing` and the `123` file had the content `1 2 3`, the generated result in this case would be `Testing: 1 2 3 !!!`
-
-```js
-grunt.initConfig({
-  webdriver_jasmine_runnner: {
-    options: {
-      separator: ': ',
-      punctuation: ' !!!',
-    },
-    files: {
-      'dest/default_options': ['src/testing', 'src/123'],
-    },
-  },
-})
+grunt.registerTask 'browser:test', ['default', 'jasmine:orca:build', 'connect', 'webdriver_jasmine_runner']
 ```
 
 ## Contributing
-In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
+Do what you will, but please be careful.
 
 ## Release History
-_(Nothing yet)_
+0.0.1 - First implementation for use by the Orca team

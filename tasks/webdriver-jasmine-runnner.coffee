@@ -62,12 +62,12 @@ module.exports = (grunt) ->
                       symbolSummaryElement.isElementPresent(webdriver.By.className('pending')).then (isPendingPresent)->
                         !isPendingPresent
                     , options.allTestsTimeout
-                    grunt.log.writeln 'Done running all tests.'
                     driver.wait ->
                       driver.isElementPresent(webdriver.By.id('details')).then (isPresent) ->
                         isPresent
                     , 6000
                     driver.findElement(webdriver.By.id('details')).then (detailsElement) ->
+                      grunt.log.writeln 'Done running all tests.'
                       detailsElement.isElementPresent(webdriver.By.className('failed')).then (hasFailures) ->
                         if (hasFailures)
                           detailsElement.findElements(webdriver.By.className('failed')).then (failedElements) ->
