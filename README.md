@@ -101,7 +101,7 @@ The file to load that runs the jasmine tests.
 
 #### options.allTestsTimeout
 - Type: `Number`
-- Default value: `30 * 60 * 1000`
+- Default value: `30 * 60 * 1000` (30 minutes)
 
 Time in milliseconds to wait for the tests to complete.
 
