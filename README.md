@@ -145,5 +145,6 @@ grunt.registerTask 'browser:test', ['default', 'jasmine:build', 'connect', 'webd
 Do what you will, but please be careful.
 
 ## Release History
+0.0.2 - Added transitive dependency on selenium-webdriver
 0.0.1 - First implementation for use by the Orca team
 
