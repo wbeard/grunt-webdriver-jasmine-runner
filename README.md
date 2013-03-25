@@ -36,6 +36,15 @@ Once the plugin has been installed, it may be enabled inside your Gruntfile with
 grunt.loadNpmTasks('grunt-webdriver-jasmine-runner');
 ```
 
+### Setting up webdriver
+
+Browser drivers will need to be installed for the browsers you plan to run tests on. If you use brew and want to run tests
+on Chrome, use the following command:
+
+```brew install chromedriver```
+
+The driver for firefox is included in the plugin.
+
 ## The "webdriver_jasmine_runner" task
 
 ### Overview
