@@ -66,7 +66,7 @@ grunt.initConfig
 ```coffee
       seleniumJar: "#{__dirname}/lib/selenium-server-standalone-2.31.0.jar"
       seleniumServerPort: 4444
-      testBrowser: 'chrome'
+      browser: 'chrome'
       testServer: 'localhost'
       testServerPort: 8000
       testFile: '_SpecRunner.html'
@@ -86,13 +86,14 @@ The location of the selenium standalone server jar.
 
 The port number to use for the selenium server.
 
-#### options.testBrowser
+#### options.browser
 - Type: `String`
 - Default value: `'chrome'`
 - Allowed values: `'chrome', 'firefox', 'internet explorer', ...`
     [source](http://selenium.googlecode.com/svn/trunk/docs/api/py/_modules/selenium/webdriver/common/desired_capabilities.html)
 
-The browser in which the tests will be run.
+The browser in which the tests will be run.  This can also be specified via the --browser command-line option (below),
+which takes precedence.
 
 #### options.testServer
 - Type: `String`
@@ -118,11 +119,16 @@ The file to load that runs the jasmine tests.
 
 Time in milliseconds to wait for all of the tests to finish running.
 
-#### options.keepalive
-- Type: `Boolean`
-- Default value: `false`
+### Command-Line Options
 
-When true, the selenium server and browser are not closed after the tests have been run.  Useful for interactive 
+#### --browser=[chrome|firefox|internet explorer|...]
+[source](http://selenium.googlecode.com/svn/trunk/docs/api/py/_modules/selenium/webdriver/common/desired_capabilities.html)
+
+The browser in which the tests will be run.  Takes precedence over the "browser" gruntfile option (above).
+
+#### --keepalive
+
+The selenium server and browser are not closed after the tests have been run.  Useful for interactive
 debugging of failing tests.
 
 ### Output
@@ -154,6 +160,7 @@ grunt.registerTask 'browser:test', ['default', 'jasmine:build', 'connect', 'webd
 Do what you will, but please be careful.
 
 ## Release History
+0.0.3 - Renamed "testBrowser" to "browser", added --browser and --keepalive command-line options.
 0.0.2 - Added transitive dependency on selenium-webdriver
 0.0.1 - First implementation for use by the Orca team
 

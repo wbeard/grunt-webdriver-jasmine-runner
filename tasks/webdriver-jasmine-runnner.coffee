@@ -12,12 +12,13 @@ module.exports = (grunt) ->
     options = @options
       seleniumJar: __dirname+'/lib/selenium-server-standalone-2.31.0.jar'
       seleniumServerPort: 4444
-      testBrowser: 'chrome'
+      browser: 'chrome'
       testServer: 'localhost'
       testServerPort: 8000
       testFile: '_SpecRunner.html'
       allTestsTimeout: 30 * 60 * 1000
-      keepalive: false
+
+    options.browser = grunt.option('browser') || options.browser
 
     if not fs.existsSync options.seleniumJar
       throw Error "The specified jar does not exist: #{options.seleniumJar}"
@@ -34,14 +35,14 @@ module.exports = (grunt) ->
     server.address().then (serverAddress) ->
         driver = new webdriver.Builder()
           .usingServer(serverAddress)
-          .withCapabilities({'browserName': options.testBrowser})
+          .withCapabilities({'browserName': options.browser})
           .build()
 
         grunt.log.writeln "Connecting to webdriver server at #{serverAddress}."
 
         testUrl = "http://#{options.testServer}:#{options.testServerPort}/#{options.testFile}"
 
-        grunt.log.writeln "Running Jasmine tests at #{testUrl} with #{options.testBrowser}."
+        grunt.log.writeln "Running Jasmine tests at #{testUrl} with #{options.browser}."
 
         allTestsPassed = false
 
@@ -80,7 +81,7 @@ module.exports = (grunt) ->
                           grunt.log.writeln 'All ' + "#{numTests}".cyan + ' tests passed!'
 
           runJasmineTests.then ->
-            if (!options.keepalive)
+            if (!grunt.option('keepalive'))
               grunt.log.writeln 'Closing test servers.'
               driver.quit().addBoth ->
                 server.stop()
