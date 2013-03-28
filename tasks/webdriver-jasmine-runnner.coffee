@@ -16,9 +16,11 @@ module.exports = (grunt) ->
       testServer: 'localhost'
       testServerPort: 8000
       testFile: '_SpecRunner.html'
+      ignoreSloppyTests: false
       allTestsTimeout: 30 * 60 * 1000
 
     options.browser = grunt.option('browser') || options.browser
+    options.ignoreSloppyTests = grunt.option('ignoreSloppyTests') || options.ignoreSloppyTests
 
     if not fs.existsSync options.seleniumJar
       throw Error "The specified jar does not exist: #{options.seleniumJar}"
@@ -50,7 +52,7 @@ module.exports = (grunt) ->
 
           runJasmineTests = webdriver.promise.createFlow (flow)->
             flow.execute ->
-              driver.get("#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{sessionData.id}&useWebdriver=true").then ->
+              driver.get("#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{sessionData.id}&useWebdriver=true&ignoreSloppyTests=#{options.ignoreSloppyTests}").then ->
                 driver.wait ->
                   driver.isElementPresent(webdriver.By.className('symbolSummary')).then (symbolSummaryFound)->
                     symbolSummaryFound
