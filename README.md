@@ -64,7 +64,8 @@ grunt.initConfig
 #### Summary (w/ default values)
 
 ```coffee
-      seleniumJar: "#{__dirname}/lib/selenium-server-standalone-2.31.0.jar"
+      seleniumJar: "#{__dirname}/lib/selenium-server-standalone-2.31.0.jar" # Only specified when starting a local selenium server
+      seleniumServerHost: undefined # Only specified when running tests on a remote selenium server
       seleniumServerPort: 4444
       browser: 'chrome'
       testServer: 'localhost'
@@ -80,11 +81,17 @@ grunt.initConfig
 
 The location of the selenium standalone server jar.
 
+#### options.seleniumServerHost
+- Type: `String`
+- Default value: none
+
+The hostname of a remote selenium server to use. If specified, a selenium server won't be started.
+
 #### options.seleniumServerPort
 - Type: `Number`
 - Default value: `4444`
 
-The port number to use for the selenium server.
+The port number to use for the local selenium server when running locally or the remote selenium server when using a remote server.
 
 #### options.browser
 - Type: `String`
