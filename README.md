@@ -168,5 +168,8 @@ grunt.initConfig
 grunt.registerTask 'browser:test', ['default', 'jasmine:build', 'connect', 'webdriver_jasmine_runner']
 ```
 
-## Contributing
-Do what you will, but please be careful.
+## Contributors
+- [bgok](https://github.com/bgok)
+- [mphoenix-rally](https://github.com/mphoenix-rally)
+- [jyonker](https://github.com/jyonker)
+
