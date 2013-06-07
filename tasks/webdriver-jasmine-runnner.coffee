@@ -8,7 +8,7 @@ module.exports = (grunt) ->
 
     grunt.registerMultiTask 'webdriver_jasmine_runner', 'Runs a jasmine test with webdriver.', ->
         options = @options
-            seleniumJar: __dirname + '/lib/selenium-server-standalone-2.31.0.jar'
+            seleniumJar: __dirname + '/lib/selenium-server-standalone-2.33.0.jar'
             seleniumServerPort: 4444
             browser: 'chrome'
             testServer: 'localhost'
@@ -40,15 +40,16 @@ module.exports = (grunt) ->
 
 
     serverConnection = (serverAddress, options, done) ->
+        testUrl = "http://#{options.testServer}:#{options.testServerPort}/#{options.testFile}"
+        getWebServerUrl = (session)->
+            "#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{session}&useWebdriver=true&ignoreSloppyTests=#{options.ignoreSloppyTests}"
+
         driver = new webdriver.Builder()
             .usingServer(serverAddress)
             .withCapabilities({'browserName': options.browser})
             .build()
 
         grunt.log.writeln "Connecting to webdriver server at #{serverAddress}."
-
-        testUrl = "http://#{options.testServer}:#{options.testServerPort}/#{options.testFile}"
-
         grunt.log.writeln "Running Jasmine tests at #{testUrl} with #{options.browser}."
 
         allTestsPassed = false
@@ -56,7 +57,8 @@ module.exports = (grunt) ->
         driver.session_.then (sessionData) ->
             runJasmineTests = webdriver.promise.createFlow (flow)->
                 flow.execute ->
-                    driver.get("#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{sessionData.id}&useWebdriver=true&ignoreSloppyTests=#{options.ignoreSloppyTests}").then ->
+                    driver.get(getWebServerUrl(sessionData.id)).then ->
+                        # This section parses the jasmine so that the results can be written to the console.
                         driver.wait ->
                             driver.isElementPresent(webdriver.By.className('symbolSummary')).then (symbolSummaryFound)->
                                 symbolSummaryFound
