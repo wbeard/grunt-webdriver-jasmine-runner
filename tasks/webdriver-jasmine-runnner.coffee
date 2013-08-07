@@ -60,10 +60,10 @@ module.exports = (grunt) ->
         outputPasses = 0
         outputFailures = 0
 
-        driver.session_.then (sessionData) ->
+        driver.getSession().then (session) ->
             runJasmineTests = webdriver.promise.createFlow (flow)->
                 flow.execute ->
-                    driver.get(getWebServerUrl(sessionData.id)).then ->
+                    driver.get(getWebServerUrl(session.getId())).then ->
                         startTime = new Date()
                         # This section parses the jasmine so that the results can be written to the console.
                         driver.wait ->
