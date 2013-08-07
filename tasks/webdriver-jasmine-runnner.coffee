@@ -8,7 +8,7 @@ module.exports = (grunt) ->
 
     grunt.registerMultiTask 'webdriver_jasmine_runner', 'Runs a jasmine test with webdriver.', ->
         options = @options
-            seleniumJar: __dirname + '/lib/selenium-server-standalone-2.33.0.jar'
+            seleniumJar: __dirname + '/lib/selenium-server-standalone-2.34.0.jar'
             seleniumServerPort: 4444
             seleniumServerArgs: []
             seleniumServerJvmArgs: []
