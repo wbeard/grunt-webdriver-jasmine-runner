@@ -11,6 +11,7 @@ module.exports = (grunt) ->
             seleniumJar: __dirname + '/lib/selenium-server-standalone-2.33.0.jar'
             seleniumServerPort: 4444
             seleniumServerArgs: []
+            seleniumServerJvmArgs: []
             browser: 'chrome'
             testServer: 'localhost'
             testServerPort: 8000
@@ -30,12 +31,11 @@ module.exports = (grunt) ->
             serverAddress = "http://#{options.seleniumServerHost}:#{options.seleniumServerPort}/wd/hub"
             serverConnection serverAddress, options, done
         else
-            server = new remote.SeleniumServer(
-                options.seleniumJar
-            ,
+            server = new remote.SeleniumServer
+                jar: options.seleniumJar
                 port: options.seleniumServerPort
+                jvmArgs: options.seleniumServerJvmArgs
                 args: options.seleniumServerArgs
-            )
 
             grunt.log.writeln "Starting webdriver server at http://localhost:#{options.seleniumServerPort}"
             server.start()
