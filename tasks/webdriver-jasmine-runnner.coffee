@@ -8,10 +8,9 @@ module.exports = (grunt) ->
 
     grunt.registerMultiTask 'webdriver_jasmine_runner', 'Runs a jasmine test with webdriver.', ->
         options = @options
-            seleniumJar: __dirname + '/lib/selenium-server-standalone-2.33.0.jar'
+            seleniumJar: __dirname + '/lib/selenium-server-standalone-2.35.0.jar'
             seleniumServerPort: 4444
             seleniumServerArgs: []
-            seleniumServerJvmArgs: []
             browser: 'chrome'
             testServer: 'localhost'
             testServerPort: 8000
@@ -34,7 +33,6 @@ module.exports = (grunt) ->
             server = new remote.SeleniumServer
                 jar: options.seleniumJar
                 port: options.seleniumServerPort
-                jvmArgs: options.seleniumServerJvmArgs
                 args: options.seleniumServerArgs
 
             grunt.log.writeln "Starting webdriver server at http://localhost:#{options.seleniumServerPort}"
