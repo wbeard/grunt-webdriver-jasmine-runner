@@ -30,8 +30,7 @@ module.exports = (grunt) ->
             serverAddress = "http://#{options.seleniumServerHost}:#{options.seleniumServerPort}/wd/hub"
             serverConnection serverAddress, options, done
         else
-            server = new remote.SeleniumServer
-                jar: options.seleniumJar
+            server = new remote.SeleniumServer options.seleniumJar,
                 port: options.seleniumServerPort
                 args: options.seleniumServerArgs
 
