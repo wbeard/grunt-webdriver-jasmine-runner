@@ -54,10 +54,72 @@ module.exports = (grunt) ->
         grunt.log.writeln "Running Jasmine tests at #{testUrl} with #{options.browser}."
 
         allTestsPassed = false
+        outputDots = 0
         outputPasses = 0
         outputFailures = 0
-
+        
         driver.getSession().then (session) ->
+            
+            getAllTestResultsViaUnderscore = (outputDots) ->
+                _.compact(
+                    _.map(
+                        _.pluck(
+                            _.rest(document.querySelectorAll(".symbolSummary li"), outputDots),
+                            'className'
+                        ),
+                        (status) ->
+                            switch status
+                                when 'passed' then '.'
+                                when 'failed' then 'F'
+                                else null
+                    )
+                ).join('')
+
+            outputStatusUntilDoneWithUnderscore = (numTests, symbolSummaryElement) ->
+                driver.executeScript(getAllTestResultsViaUnderscore, outputDots).then (results) ->
+                    notYetOutput = results.length
+                    isPendingPresent = (outputDots + notYetOutput) < numTests
+                    dotsThreshold = if isPendingPresent then 100 else 0
+                    outputStart = 0
+                    while notYetOutput > dotsThreshold
+                        toOutput = Math.min(notYetOutput, 100)
+                        toOutputStr = results.slice(outputStart, outputStart + toOutput)
+                        outputFailures += toOutputStr.split('F').length - 1
+                        
+                        notYetOutput -= toOutput
+                        outputDots += toOutput
+                        outputStart += toOutput
+
+                        grunt.log.writeln("#{toOutputStr} #{outputDots} / #{numTests} (#{outputFailures})")
+
+                    isPendingPresent
+
+            outputStatusUntilDoneWithoutUnderscore = (numTests, symbolSummaryElement) ->
+                symbolSummaryElement.isElementPresent(webdriver.By.className('pending')).then (isPendingPresent) ->
+                    webdriver.promise.fullyResolved(
+                        [
+                            driver.executeScript('return document.querySelectorAll(".symbolSummary .passed").length').then (passedElements) ->
+                                pendingFailureDots = passedElements - outputPasses
+                            driver.executeScript('return document.querySelectorAll(".symbolSummary .failed").length').then (failedElements) ->
+                                pendingFailureDots = failedElements - outputFailures
+                        ]
+                    ).then ([pendingPasses, pendingFailures]) ->
+                        dotsThreshold = if isPendingPresent then 100 else 0
+                        while (pendingPasses + pendingFailures) > dotsThreshold
+                            failuresToOutput = Math.min(pendingFailures, 100)
+                            passesToOutput = Math.min(100 - failuresToOutput, pendingPasses)
+                            
+                            pendingPasses -= passesToOutput
+                            pendingFailures -= failuresToOutput
+                            outputPasses += passesToOutput
+                            outputFailures += failuresToOutput
+                            outputDots = outputPasses + outputFailures
+
+                            grunt.log.writeln("#{Array(failuresToOutput + 1).join('F')}#{Array(passesToOutput + 1).join('.')} #{outputDots} / #{numTests} (#{outputFailures})")
+
+                        isPendingPresent
+
+
             runJasmineTests = webdriver.promise.createFlow (flow)->
                 flow.execute ->
                     driver.get(getWebServerUrl(session.getId())).then ->
@@ -68,36 +130,18 @@ module.exports = (grunt) ->
                                 symbolSummaryFound
                         , 5000
                         driver.findElement(webdriver.By.className('symbolSummary')).then (symbolSummaryElement) ->
-                            symbolSummaryElement.findElements(webdriver.By.tagName('li')).then (symbolSummaryIcons) ->
-                                numTests = symbolSummaryIcons.length
+                            driver.executeScript('return {numTests: document.querySelectorAll(".symbolSummary li").length, underscore: !!window._}').then (summary) ->
+                                numTests = summary.numTests
+                                hasUnderscore = summary.underscore
                                 grunt.log.writeln 'Test page loaded.  Running ' + "#{numTests}".cyan + ' tests...'
+                                statusFn = (if hasUnderscore then outputStatusUntilDoneWithUnderscore else outputStatusUntilDoneWithoutUnderscore)
                                 driver.wait ->
-                                    symbolSummaryElement.isElementPresent(webdriver.By.className('pending')).then (isPendingPresent)->
-                                        webdriver.promise.fullyResolved(
-                                            [
-                                                symbolSummaryElement.findElements(webdriver.By.className('passed')).then (failedElements) ->
-                                                    pendingFailureDots = failedElements.length - outputPasses
-                                                symbolSummaryElement.findElements(webdriver.By.className('failed')).then (failedElements) ->
-                                                    pendingFailureDots = failedElements.length - outputFailures
-                                            ]
-                                        ).then ([pendingPasses, pendingFailures]) ->
-                                            dotsThreshold = if isPendingPresent then 100 else 0
-                                            while (pendingPasses + pendingFailures) > dotsThreshold
-                                                failuresToOutput = Math.min(pendingFailures, 100)
-                                                passesToOutput = Math.min(100 - failuresToOutput, pendingPasses)
-                                                
-                                                pendingPasses -= passesToOutput
-                                                pendingFailures -= failuresToOutput
-                                                outputPasses += passesToOutput
-                                                outputFailures += failuresToOutput
-                                                outputDots = outputPasses + outputFailures
+                                    statusFn(numTests, symbolSummaryElement).then (isPending) ->
+                                        if isPending
+                                            webdriver.promise.delayed(900).then -> !isPending
+                                        else
+                                            !isPending
 
-                                                grunt.log.writeln("#{Array(failuresToOutput + 1).join('F')}#{Array(passesToOutput + 1).join('.')} #{outputDots} / #{numTests} (#{outputFailures})")
-
-                                            if isPendingPresent
-                                                webdriver.promise.delayed(900).then -> !isPendingPresent
-                                            else
-                                                !isPendingPresent
                                 , options.allTestsTimeout
                                 driver.wait ->
                                     driver.isElementPresent(webdriver.By.id('details')).then (isPresent) ->
