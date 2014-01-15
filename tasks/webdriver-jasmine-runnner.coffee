@@ -37,10 +37,13 @@ module.exports = (grunt) ->
                 args: options.seleniumServerArgs
 
             grunt.log.writeln "Starting webdriver server at http://localhost:#{options.seleniumServerPort}"
-            server.start()
-            server.address().then (serverAddress) ->
-                serverConnection serverAddress, options, done
 
+            server.start().then (serverAddress) ->
+                serverConnection serverAddress, options, done
+            .then null, (err) ->
+                grunt.log.writeln 'Error occurred. Stopping webdriver server.'
+                server.stop().then ->
+                  throw err
 
     serverConnection = (serverAddress, options, done) ->
         testUrl = "http://#{options.testServer}:#{options.testServerPort}/#{options.testFile}"
@@ -165,5 +168,4 @@ module.exports = (grunt) ->
                 if (!grunt.option('keepalive'))
                     grunt.log.writeln 'Closing test servers.'
                     driver.quit().addBoth ->
-                        server?.stop()
                         done(allTestsPassed)
