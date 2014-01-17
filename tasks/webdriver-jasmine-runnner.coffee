@@ -9,7 +9,6 @@ module.exports = (grunt) ->
     grunt.registerMultiTask 'webdriver_jasmine_runner', 'Runs a jasmine test with webdriver.', ->
         options = @options
             seleniumJar: __dirname + '/lib/selenium-server-standalone-2.37.0.jar'
-            seleniumServerPort: 4444
             seleniumServerArgs: []
             seleniumServerJvmArgs: []
             browser: 'chrome'
@@ -32,13 +31,11 @@ module.exports = (grunt) ->
             serverConnection serverAddress, options, done
         else
             server = new remote.SeleniumServer options.seleniumJar,
-                port: options.seleniumServerPort
                 jvmArgs: options.seleniumServerJvmArgs
                 args: options.seleniumServerArgs
 
-            grunt.log.writeln "Starting webdriver server at http://localhost:#{options.seleniumServerPort}"
-
             server.start().then (serverAddress) ->
+                grunt.log.writeln "Webdriver server started at #{serverAddress}"
                 serverConnection serverAddress, options, done
             .then null, (err) ->
                 grunt.log.writeln 'Error occurred. Stopping webdriver server.'
@@ -55,7 +52,7 @@ module.exports = (grunt) ->
             .withCapabilities({'browserName': options.browser})
             .build()
 
-        grunt.log.writeln "Connecting to webdriver server at #{serverAddress}."
+        grunt.log.writeln "Connecting to webdriver server."
         grunt.log.writeln "Running Jasmine tests at #{testUrl} with #{options.browser}."
 
         allTestsPassed = false
