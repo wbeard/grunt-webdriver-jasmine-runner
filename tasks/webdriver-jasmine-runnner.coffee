@@ -1,7 +1,7 @@
 module.exports = (grunt) ->
-    'use strict';
+    'use strict'
 
-    fs = require 'fs';
+    fs = require 'fs'
 
     webdriver = require 'selenium-webdriver'
     remote = require 'selenium-webdriver/remote'
@@ -26,23 +26,43 @@ module.exports = (grunt) ->
 
         done = @async()
 
+        runTests(options).addBoth (resultData) ->
+            cleanUp resultData, done
+
+    runTests = (options) ->
         if options.seleniumServerHost? and options.seleniumServerPort?
-            serverAddress = "http://#{options.seleniumServerHost}:#{options.seleniumServerPort}/wd/hub"
-            serverConnection serverAddress, options, done
+            server = "http://#{options.seleniumServerHost}:#{options.seleniumServerPort}/wd/hub"
+            serverConnection server, options
         else
-            server = new remote.SeleniumServer options.seleniumJar,
-                jvmArgs: options.seleniumServerJvmArgs
-                args: options.seleniumServerArgs
+            localSeleniumServer options
+    
+    cleanUp = (resultData, done) ->
+        resultData.driver?.quit().then ->
+            finish = ->
+                if resultData.error then throw resultData.error else done(resultData.allTestsPassed)
+                   
+            if resultData.server then resultData.server.stop().then(finish) else finish()
 
-            server.start().then (serverAddress) ->
-                grunt.log.writeln "Webdriver server started at #{serverAddress}"
-                serverConnection serverAddress, options, done
-            .then null, (err) ->
-                grunt.log.writeln 'Error occurred. Stopping webdriver server.'
-                server.stop().then ->
-                  throw err
+    localSeleniumServer = (options) ->
+        server = new remote.SeleniumServer options.seleniumJar,
+                        jvmArgs: options.seleniumServerJvmArgs
+                        args: options.seleniumServerArgs
 
-    serverConnection = (serverAddress, options, done) ->
+        server.start().then (serverAddress) ->
+            grunt.log.writeln "Started webdriver server at #{serverAddress}"
+
+            resolveResult = (resolveFn, resultData) ->
+                resultData.server = server
+                resolveFn.call result, resultData
+
+            serverConnection(serverAddress, options).then (resultData) ->
+                resolveResult result.fulfill, resultData
+            .then null, (resultData) ->
+                resolveResult result.reject, resultData
+
+        result = webdriver.promise.defer()
+
+    serverConnection = (serverAddress, options) ->
         testUrl = "http://#{options.testServer}:#{options.testServerPort}/#{options.testFile}"
         getWebServerUrl = (session)->
             "#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{session}&useWebdriver=true&ignoreSloppyTests=#{options.ignoreSloppyTests}"
@@ -52,16 +72,19 @@ module.exports = (grunt) ->
             .withCapabilities({'browserName': options.browser})
             .build()
 
-        grunt.log.writeln "Connecting to webdriver server."
+        resultData = {}
+        resultData.driver = driver unless grunt.option('keepalive')
+
+        grunt.log.writeln "Connecting to webdriver server #{serverAddress}."
         grunt.log.writeln "Running Jasmine tests at #{testUrl} with #{options.browser}."
 
-        allTestsPassed = false
+        resultData.allTestsPassed = false
         outputDots = 0
         outputPasses = 0
         outputFailures = 0
 
         driver.getSession().then (session) ->
-
+        
             getAllTestResultsViaUnderscore = (outputDots) ->
                 _.compact(
                     _.map(
@@ -158,11 +181,14 @@ module.exports = (grunt) ->
                                                 webdriver.promise.fullyResolved(failedElement.getText() for failedElement in failedElements).then (failureTexts) ->
                                                     grunt.log.writeln (failureText.yellow for failureText in failureTexts).join("\n\n")
                                         else
-                                            allTestsPassed = true
+                                            resultData.allTestsPassed = true
                                             grunt.log.writeln 'All ' + "#{numTests}".cyan + ' tests passed!'
 
             runJasmineTests.then ->
-                if (!grunt.option('keepalive'))
-                    grunt.log.writeln 'Closing test servers.'
-                    driver.quit().addBoth ->
-                        done(allTestsPassed)
+                result.fulfill resultData 
+
+        .then null, (err) ->
+            resultData.error = err
+            result.reject resultData
+
+        result = webdriver.promise.defer()
