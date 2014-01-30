@@ -79,7 +79,7 @@ grunt.initConfig
 
 #### options.seleniumJar
 - Type: `String`
-- Default value: `"#{__dirname}/lib/selenium-server-standalone-2.37.0.jar"`
+- Default value: `"#{__dirname}/lib/selenium-server-standalone-2.39.0.jar"`
 
 The location of the selenium standalone server jar.
 
