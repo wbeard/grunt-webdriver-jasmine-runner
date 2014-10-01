@@ -3,8 +3,8 @@ module.exports = (grunt) ->
 
     fs = require 'fs'
 
-    webdriver = require 'selenium-webdriver'
-    remote = require 'selenium-webdriver/remote'
+    webdriverClient = ''
+    webdriverClientRemote = ''
 
     grunt.registerMultiTask 'webdriver_jasmine_runner', 'Runs a jasmine test with webdriver.', ->
         options = @options
@@ -17,17 +17,25 @@ module.exports = (grunt) ->
             testFile: '_SpecRunner.html'
             ignoreSloppyTests: false
             allTestsTimeout: 30 * 60 * 1000
+            webdriverClient: require 'selenium-webdriver'
+            webdriverClientRemote: require 'selenium-webdriver/remote'
 
         options.browser = grunt.option('browser') || options.browser
         options.ignoreSloppyTests = grunt.option('ignoreSloppyTests') || options.ignoreSloppyTests
+
+        webdriverClient = options.webdriverClient
+        webdriverClientRemote = options.webdriverClientRemote
 
         if not fs.existsSync options.seleniumJar
             throw Error "The specified jar does not exist: #{options.seleniumJar}"
 
         done = @async()
 
-        runTests(options).addBoth (resultData) ->
+        runTests(options).then (resultData) ->
             cleanUp resultData, done
+        ,   (err) ->
+            grunt.writeln err
+
 
     runTests = (options) ->
         if options.seleniumServerHost? and options.seleniumServerPort?
@@ -35,16 +43,16 @@ module.exports = (grunt) ->
             serverConnection server, options
         else
             localSeleniumServer options
-    
+
     cleanUp = (resultData, done) ->
         resultData.driver?.quit().then ->
             finish = ->
                 if resultData.error then throw resultData.error else done(resultData.allTestsPassed)
-                   
+
             if resultData.server then resultData.server.stop().then(finish) else finish()
 
     localSeleniumServer = (options) ->
-        server = new remote.SeleniumServer options.seleniumJar,
+        server = new webdriverClientRemote.SeleniumServer options.seleniumJar,
                         jvmArgs: options.seleniumServerJvmArgs
                         args: options.seleniumServerArgs
 
@@ -60,14 +68,14 @@ module.exports = (grunt) ->
             .then null, (resultData) ->
                 resolveResult result.reject, resultData
 
-        result = webdriver.promise.defer()
+        result = webdriverClient.promise.defer()
 
     serverConnection = (serverAddress, options) ->
         testUrl = "http://#{options.testServer}:#{options.testServerPort}/#{options.testFile}"
         getWebServerUrl = (session)->
             "#{testUrl}?wdurl=#{encodeURIComponent(serverAddress)}&wdsid=#{session}&useWebdriver=true&ignoreSloppyTests=#{options.ignoreSloppyTests}"
 
-        driver = new webdriver.Builder()
+        driver = new webdriverClient.Builder()
             .usingServer(serverAddress)
             .withCapabilities({'browserName': options.browser})
             .build()
@@ -84,7 +92,7 @@ module.exports = (grunt) ->
         outputFailures = 0
 
         driver.getSession().then (session) ->
-        
+
             getAllTestResultsViaUnderscore = (outputDots) ->
                 _.compact(
                     _.map(
@@ -120,8 +128,8 @@ module.exports = (grunt) ->
                     isPendingPresent
 
             outputStatusUntilDoneWithoutUnderscore = (numTests, symbolSummaryElement) ->
-                symbolSummaryElement.isElementPresent(webdriver.By.className('pending')).then (isPendingPresent) ->
-                    webdriver.promise.fullyResolved(
+                symbolSummaryElement.isElementPresent(webdriverClient.By.className('pending')).then (isPendingPresent) ->
+                    webdriverClient.promise.fullyResolved(
                         [
                             driver.executeScript('return document.querySelectorAll(".symbolSummary .passed").length').then (passedElements) ->
                                 pendingFailureDots = passedElements - outputPasses
@@ -145,16 +153,16 @@ module.exports = (grunt) ->
                         isPendingPresent
 
 
-            runJasmineTests = webdriver.promise.createFlow (flow)->
+            runJasmineTests = webdriverClient.promise.createFlow (flow)->
                 flow.execute ->
                     driver.get(getWebServerUrl(session.getId())).then ->
                         startTime = new Date()
                         # This section parses the jasmine so that the results can be written to the console.
                         driver.wait ->
-                            driver.isElementPresent(webdriver.By.className('symbolSummary')).then (symbolSummaryFound)->
+                            driver.isElementPresent(webdriverClient.By.className('symbolSummary')).then (symbolSummaryFound)->
                                 symbolSummaryFound
-                        , 5000
-                        driver.findElement(webdriver.By.className('symbolSummary')).then (symbolSummaryElement) ->
+                        , 20000
+                        driver.findElement(webdriverClient.By.className('symbolSummary')).then (symbolSummaryElement) ->
                             driver.executeScript('return {numTests: document.querySelectorAll(".symbolSummary li").length, underscore: !!window._}').then (summary) ->
                                 numTests = summary.numTests
                                 hasUnderscore = summary.underscore
@@ -163,32 +171,32 @@ module.exports = (grunt) ->
                                 driver.wait ->
                                     statusFn(numTests, symbolSummaryElement).then (isPending) ->
                                         if isPending
-                                            webdriver.promise.delayed(900).then -> !isPending
+                                            webdriverClient.promise.delayed(900).then -> !isPending
                                         else
                                             !isPending
 
                                 , options.allTestsTimeout
                                 driver.wait ->
-                                    driver.isElementPresent(webdriver.By.id('details')).then (isPresent) ->
+                                    driver.isElementPresent(webdriverClient.By.id('details')).then (isPresent) ->
                                         isPresent
-                                , 6000
-                                driver.findElement(webdriver.By.id('details')).then (detailsElement) ->
+                                , 20000
+                                driver.findElement(webdriverClient.By.id('details')).then (detailsElement) ->
                                     grunt.log.writeln "Done running all tests. Suite took #{(new Date() - startTime) / 1000} seconds."
-                                    detailsElement.isElementPresent(webdriver.By.className('failed')).then (hasFailures) ->
+                                    detailsElement.isElementPresent(webdriverClient.By.className('failed')).then (hasFailures) ->
                                         if (hasFailures)
-                                            detailsElement.findElements(webdriver.By.className('failed')).then (failedElements) ->
+                                            detailsElement.findElements(webdriverClient.By.className('failed')).then (failedElements) ->
                                                 grunt.log.writeln "#{failedElements.length} of #{numTests} tests failed:".red
-                                                webdriver.promise.fullyResolved(failedElement.getText() for failedElement in failedElements).then (failureTexts) ->
+                                                webdriverClient.promise.fullyResolved(failedElement.getText() for failedElement in failedElements).then (failureTexts) ->
                                                     grunt.log.writeln (failureText.yellow for failureText in failureTexts).join("\n\n")
                                         else
                                             resultData.allTestsPassed = true
                                             grunt.log.writeln 'All ' + "#{numTests}".cyan + ' tests passed!'
 
             runJasmineTests.then ->
-                result.fulfill resultData 
+                result.fulfill resultData
 
         .then null, (err) ->
             resultData.error = err
             result.reject resultData
 
-        result = webdriver.promise.defer()
+        result = webdriverClient.promise.defer()
